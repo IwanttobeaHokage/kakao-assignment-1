@@ -21,11 +21,10 @@
       <button id="prevDateButton" class="btn btn-date-nav" aria-label="이전 날짜">&#8249;</button>
 
       <div class="date-display-wrapper">
-        <!-- 클릭하면 달력 팝업이 열린다 -->
         <span id="dateDisplay" class="date-display" title="클릭하면 달력이 열립니다"></span>
         <button id="todayButton" class="btn btn-today">오늘</button>
 
-        <!-- 달력 팝업 (date-display-wrapper 기준 절대 위치) -->
+        <!-- 달력 팝업 -->
         <div id="calendarPopup" class="calendar-popup hidden">
           <div class="calendar-header">
             <button id="prevMonthButton" class="btn-cal-nav">&#8249;</button>
@@ -43,6 +42,13 @@
       <button id="nextDateButton" class="btn btn-date-nav" aria-label="다음 날짜">&#8250;</button>
     </section>
 
+    <!-- 주간 뷰 -->
+    <section class="week-nav">
+      <button id="prevWeekButton" class="btn btn-date-nav" aria-label="이전 주">&#8249;</button>
+      <div id="weekGrid" class="week-grid"></div>
+      <button id="nextWeekButton" class="btn btn-date-nav" aria-label="다음 주">&#8250;</button>
+    </section>
+
     <!-- Todo 입력 영역 -->
     <section class="input-section">
       <div class="input-wrapper">
@@ -55,7 +61,6 @@
         />
         <button id="addButton" class="btn btn-add">추가</button>
       </div>
-      <!-- 마감 시간 입력 (선택) -->
       <div class="due-wrapper">
         <label for="dueInput" class="due-label">마감</label>
         <input type="datetime-local" id="dueInput" class="due-input" />
