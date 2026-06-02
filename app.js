@@ -2,6 +2,9 @@
 
 const STORAGE_KEY = 'todo-app-data';
 
+// 주간 뷰 요일 레이블 (월~일 순서)
+const DAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
+
 
 // ===== 상태 =====
 
@@ -16,21 +19,24 @@ let calendarViewMonth;
 
 // ===== DOM 참조 =====
 
-const todoInput      = document.getElementById('todoInput');
-const dueInput       = document.getElementById('dueInput');
-const addButton      = document.getElementById('addButton');
-const todoList       = document.getElementById('todoList');
-const errorMessage   = document.getElementById('errorMessage');
-const emptyMessage   = document.getElementById('emptyMessage');
-const dateDisplay    = document.getElementById('dateDisplay');
-const prevDateButton = document.getElementById('prevDateButton');
-const nextDateButton = document.getElementById('nextDateButton');
-const todayButton    = document.getElementById('todayButton');
-const calendarPopup  = document.getElementById('calendarPopup');
-const calendarTitle  = document.getElementById('calendarTitle');
-const calendarDays   = document.getElementById('calendarDays');
+const todoInput       = document.getElementById('todoInput');
+const dueInput        = document.getElementById('dueInput');
+const addButton       = document.getElementById('addButton');
+const todoList        = document.getElementById('todoList');
+const errorMessage    = document.getElementById('errorMessage');
+const emptyMessage    = document.getElementById('emptyMessage');
+const dateDisplay     = document.getElementById('dateDisplay');
+const prevDateButton  = document.getElementById('prevDateButton');
+const nextDateButton  = document.getElementById('nextDateButton');
+const todayButton     = document.getElementById('todayButton');
+const calendarPopup   = document.getElementById('calendarPopup');
+const calendarTitle   = document.getElementById('calendarTitle');
+const calendarDays    = document.getElementById('calendarDays');
 const prevMonthButton = document.getElementById('prevMonthButton');
 const nextMonthButton = document.getElementById('nextMonthButton');
+const weekGrid        = document.getElementById('weekGrid');
+const prevWeekButton  = document.getElementById('prevWeekButton');
+const nextWeekButton  = document.getElementById('nextWeekButton');
 
 
 // ===== 이벤트 등록 =====
@@ -43,13 +49,17 @@ prevDateButton.addEventListener('click', () => navigateDate(-1));
 nextDateButton.addEventListener('click', () => navigateDate(1));
 todayButton.addEventListener('click', goToToday);
 
+// 주간 뷰 이전 / 다음 주 이동
+prevWeekButton.addEventListener('click', () => navigateWeek(-1));
+nextWeekButton.addEventListener('click', () => navigateWeek(1));
+
 // 날짜 텍스트 클릭 시 달력 팝업 토글
 dateDisplay.addEventListener('click', (e) => {
   e.stopPropagation();
   calendarPopup.classList.contains('hidden') ? openCalendar() : closeCalendar();
 });
 
-// 달력 팝업 내부 클릭은 전파를 막아 외부클릭 핸들러가 닫지 않게 함
+// 달력 팝업 내부 클릭은 외부클릭 핸들러로 전파되지 않도록 차단
 calendarPopup.addEventListener('click', (e) => e.stopPropagation());
 
 prevMonthButton.addEventListener('click', () => navigateCalendarMonth(-1));
@@ -88,84 +98,6 @@ function loadTodos() {
 }
 
 
-// ===== 달력 팝업 =====
-
-/**
- * 달력 팝업을 열고 현재 선택된 날짜가 속한 월을 표시한다.
- */
-function openCalendar() {
-  calendarViewYear  = currentDate.getFullYear();
-  calendarViewMonth = currentDate.getMonth();
-  renderCalendarGrid();
-  calendarPopup.classList.remove('hidden');
-}
-
-function closeCalendar() {
-  calendarPopup.classList.add('hidden');
-}
-
-/**
- * 달력 팝업의 월을 direction만큼 이동하고 그리드를 다시 그린다.
- * @param {number} direction  +1 = 다음달, -1 = 이전달
- */
-function navigateCalendarMonth(direction) {
-  calendarViewMonth += direction;
-  if (calendarViewMonth < 0)  { calendarViewMonth = 11; calendarViewYear--; }
-  if (calendarViewMonth > 11) { calendarViewMonth = 0;  calendarViewYear++; }
-  renderCalendarGrid();
-}
-
-/**
- * calendarViewYear/Month 기준으로 달력 그리드를 렌더링한다.
- */
-function renderCalendarGrid() {
-  calendarTitle.textContent = `${calendarViewYear}년 ${calendarViewMonth + 1}월`;
-  calendarDays.innerHTML = '';
-
-  const todayKey    = formatDateKey(getDateAtMidnight(new Date()));
-  const selectedKey = formatDateKey(currentDate);
-
-  // 해당 월의 1일이 무슨 요일인지 (0=일 ~ 6=토)
-  const firstWeekday = new Date(calendarViewYear, calendarViewMonth, 1).getDay();
-  // 해당 월의 총 일수
-  const totalDays = new Date(calendarViewYear, calendarViewMonth + 1, 0).getDate();
-
-  // 1일 이전 빈 셀
-  for (let i = 0; i < firstWeekday; i++) {
-    const empty = document.createElement('span');
-    empty.className = 'cal-day empty';
-    calendarDays.appendChild(empty);
-  }
-
-  // 날짜 셀
-  for (let day = 1; day <= totalDays; day++) {
-    const btn     = document.createElement('button');
-    btn.textContent = day;
-    btn.className   = 'cal-day';
-
-    const dateKey = formatDateKey(new Date(calendarViewYear, calendarViewMonth, day));
-    if (dateKey === todayKey)    btn.classList.add('is-today');
-    if (dateKey === selectedKey) btn.classList.add('is-selected');
-
-    btn.addEventListener('click', () => {
-      selectCalendarDate(calendarViewYear, calendarViewMonth, day);
-    });
-
-    calendarDays.appendChild(btn);
-  }
-}
-
-/**
- * 달력에서 특정 날짜를 선택하면 currentDate를 변경하고 달력을 닫는다.
- */
-function selectCalendarDate(year, month, day) {
-  currentDate = getDateAtMidnight(new Date(year, month, day));
-  closeCalendar();
-  updateDateDisplay();
-  renderTodos();
-}
-
-
 // ===== 날짜 네비게이션 =====
 
 function navigateDate(direction) {
@@ -193,6 +125,136 @@ function updateDateDisplay() {
 }
 
 
+// ===== 주간 뷰 =====
+
+/**
+ * currentDate를 기준으로 주(週)를 direction만큼 이동한다. (+1 = 다음 주, -1 = 이전 주)
+ * 같은 요일을 유지한 채 7일씩 이동하며, 날짜 네비게이션과 주간 뷰를 함께 갱신한다.
+ */
+function navigateWeek(direction) {
+  const next = getDateAtMidnight(currentDate);
+  next.setDate(next.getDate() + direction * 7);
+  currentDate = next;
+  updateDateDisplay();
+  renderTodos(); // renderTodos 내부에서 renderWeekView도 함께 호출됨
+}
+
+/**
+ * date가 속한 주의 월~일 날짜 배열(7개)을 반환한다.
+ * @param {Date} date
+ * @returns {Date[]}
+ */
+function getWeekDates(date) {
+  const d   = getDateAtMidnight(date);
+  const dow = d.getDay(); // 0=일, 1=월, ..., 6=토
+  // 해당 날짜의 월요일 계산 (일요일이면 6일 전, 그 외엔 dow-1일 전)
+  const diffToMonday = dow === 0 ? -6 : 1 - dow;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + diffToMonday);
+
+  return Array.from({ length: 7 }, (_, i) => {
+    const day = new Date(monday);
+    day.setDate(monday.getDate() + i);
+    return day;
+  });
+}
+
+/**
+ * 주간 뷰 그리드를 현재 주(currentDate 기준)로 다시 그린다.
+ * renderTodos() 호출 시 자동으로 함께 갱신된다.
+ */
+function renderWeekView() {
+  weekGrid.innerHTML = '';
+
+  const weekDates  = getWeekDates(currentDate);
+  const todayKey   = formatDateKey(getDateAtMidnight(new Date()));
+  const selectedKey = formatDateKey(currentDate);
+
+  weekDates.forEach((date, index) => {
+    const dateKey    = formatDateKey(date);
+    const isToday    = dateKey === todayKey;
+    const isSelected = dateKey === selectedKey;
+    // 해당 날짜에 등록된 Todo 개수
+    const count = todos.filter((t) => t.date === dateKey).length;
+
+    const btn = document.createElement('button');
+    btn.className = 'week-day';
+    if (isToday)    btn.classList.add('is-today');
+    if (isSelected) btn.classList.add('is-selected');
+
+    btn.innerHTML = `
+      <span class="week-day-label">${DAY_LABELS[index]}</span>
+      <span class="week-day-num">${date.getDate()}</span>
+      <span class="week-day-count">${count > 0 ? count : ''}</span>
+    `;
+
+    // 날짜 셀 클릭 시 해당 날짜로 이동
+    btn.addEventListener('click', () => {
+      currentDate = getDateAtMidnight(date);
+      updateDateDisplay();
+      renderTodos();
+    });
+
+    weekGrid.appendChild(btn);
+  });
+}
+
+
+// ===== 달력 팝업 =====
+
+function openCalendar() {
+  calendarViewYear  = currentDate.getFullYear();
+  calendarViewMonth = currentDate.getMonth();
+  renderCalendarGrid();
+  calendarPopup.classList.remove('hidden');
+}
+
+function closeCalendar() {
+  calendarPopup.classList.add('hidden');
+}
+
+function navigateCalendarMonth(direction) {
+  calendarViewMonth += direction;
+  if (calendarViewMonth < 0)  { calendarViewMonth = 11; calendarViewYear--; }
+  if (calendarViewMonth > 11) { calendarViewMonth = 0;  calendarViewYear++; }
+  renderCalendarGrid();
+}
+
+function renderCalendarGrid() {
+  calendarTitle.textContent = `${calendarViewYear}년 ${calendarViewMonth + 1}월`;
+  calendarDays.innerHTML = '';
+
+  const todayKey    = formatDateKey(getDateAtMidnight(new Date()));
+  const selectedKey = formatDateKey(currentDate);
+  const firstWeekday = new Date(calendarViewYear, calendarViewMonth, 1).getDay();
+  const totalDays    = new Date(calendarViewYear, calendarViewMonth + 1, 0).getDate();
+
+  for (let i = 0; i < firstWeekday; i++) {
+    const empty = document.createElement('span');
+    empty.className = 'cal-day empty';
+    calendarDays.appendChild(empty);
+  }
+
+  for (let day = 1; day <= totalDays; day++) {
+    const btn     = document.createElement('button');
+    btn.textContent = day;
+    btn.className   = 'cal-day';
+    const dateKey = formatDateKey(new Date(calendarViewYear, calendarViewMonth, day));
+    if (dateKey === todayKey)    btn.classList.add('is-today');
+    if (dateKey === selectedKey) btn.classList.add('is-selected');
+    btn.addEventListener('click', () => selectCalendarDate(calendarViewYear, calendarViewMonth, day));
+    calendarDays.appendChild(btn);
+  }
+}
+
+function selectCalendarDate(year, month, day) {
+  currentDate = getDateAtMidnight(new Date(year, month, day));
+  closeCalendar();
+  updateDateDisplay();
+  renderTodos();
+}
+
+
 // ===== 핵심 기능 =====
 
 function handleAddTodo() {
@@ -207,7 +269,7 @@ function handleAddTodo() {
     text:      text,
     completed: false,
     date:      formatDateKey(currentDate),
-    dueAt:     dueInput.value || null, // "YYYY-MM-DDTHH:MM" 또는 null
+    dueAt:     dueInput.value || null,
   };
 
   todos.push(newTodo);
@@ -233,9 +295,6 @@ function toggleComplete(id) {
   renderTodos();
 }
 
-/**
- * 수정 모드로 전환 — 텍스트와 마감 시간을 모두 수정할 수 있다.
- */
 function startEditTodo(id) {
   const todo     = todos.find((todo) => todo.id === id);
   const listItem = document.querySelector(`[data-id="${id}"]`);
@@ -300,7 +359,14 @@ function saveEditTodo(id) {
 
 // ===== 렌더링 =====
 
+/**
+ * 주간 뷰와 Todo 목록을 함께 갱신한다.
+ * 상태가 바뀌는 모든 작업 이후 이 함수를 호출한다.
+ */
 function renderTodos() {
+  // Todo 개수가 변할 수 있으므로 주간 뷰도 함께 갱신
+  renderWeekView();
+
   todoList.innerHTML = '';
 
   const currentKey    = formatDateKey(currentDate);
@@ -315,19 +381,14 @@ function renderTodos() {
   filteredTodos.forEach((todo) => todoList.appendChild(createTodoElement(todo)));
 }
 
-/**
- * Todo 객체를 받아 li 요소를 생성하고 반환한다.
- * 마감 시간이 있으면 텍스트 아래에 표시하며, 기한이 지났으면 빨간색으로 강조한다.
- */
 function createTodoElement(todo) {
-  const li       = document.createElement('li');
-  li.className   = `todo-item${todo.completed ? ' completed' : ''}`;
-  li.dataset.id  = todo.id;
+  const li      = document.createElement('li');
+  li.className  = `todo-item${todo.completed ? ' completed' : ''}`;
+  li.dataset.id = todo.id;
 
   const completeClass = todo.completed ? 'btn btn-complete is-done' : 'btn btn-complete';
   const completeText  = todo.completed ? '취소' : '완료';
 
-  // 마감 시간 HTML (존재할 때만 렌더링)
   const dueHtml = todo.dueAt
     ? `<span class="todo-due ${isDueOverdue(todo) ? 'is-overdue' : ''}">
          ${isDueOverdue(todo) ? '⚠ ' : ''}마감: ${formatDueAt(todo.dueAt)}
@@ -358,7 +419,6 @@ function getDateAtMidnight(date) {
   return d;
 }
 
-/** "YYYY-MM-DD" 형식 반환 (저장·비교용) */
 function formatDateKey(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -366,31 +426,16 @@ function formatDateKey(date) {
   return `${y}-${m}-${d}`;
 }
 
-/** "YYYY년 M월 D일 (요일)" 형식 반환 (화면 표시용) */
 function formatDisplayDate(date) {
-  const days  = ['일', '월', '화', '수', '목', '금', '토'];
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
   return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일 (${days[date.getDay()]})`;
 }
 
-/**
- * datetime-local 값("YYYY-MM-DDTHH:MM")을 "M월 D일 HH:MM" 형식으로 변환한다.
- * @param {string} dueAtStr
- * @returns {string}
- */
 function formatDueAt(dueAtStr) {
-  const d       = new Date(dueAtStr);
-  const month   = d.getMonth() + 1;
-  const day     = d.getDate();
-  const hours   = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  return `${month}월 ${day}일 ${hours}:${minutes}`;
+  const d = new Date(dueAtStr);
+  return `${d.getMonth() + 1}월 ${d.getDate()}일 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-/**
- * 미완료 상태이면서 마감 시간이 현재보다 이전이면 true를 반환한다.
- * @param {{ completed: boolean, dueAt: string|null }} todo
- * @returns {boolean}
- */
 function isDueOverdue(todo) {
   if (!todo.dueAt || todo.completed) return false;
   return new Date(todo.dueAt) < new Date();
@@ -407,7 +452,6 @@ function clearInputError() {
   errorMessage.classList.add('hidden');
 }
 
-/** XSS 방지용 HTML 특수문자 이스케이프 */
 function escapeHtml(str) {
   return str
     .replace(/&/g, '&amp;')
@@ -422,4 +466,4 @@ function escapeHtml(str) {
 
 loadTodos();
 updateDateDisplay();
-renderTodos();
+renderTodos(); // renderWeekView도 내부에서 함께 실행됨
