@@ -1,1 +1,2 @@
-1주차 과제
+# hello-kakao
+kakao tech campus
