@@ -41,12 +41,13 @@ body {
   max-width: 560px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
 /* ===== 헤더 ===== */
 .app-header {
   text-align: center;
+  margin-bottom: 8px;
 }
 
 .app-title {
@@ -78,10 +79,9 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  position: relative; /* 달력 팝업의 기준점 */
+  position: relative;
 }
 
-/* 클릭 가능 표시 */
 .date-display {
   font-size: 1.1rem;
   font-weight: 700;
@@ -102,7 +102,6 @@ body {
   color: var(--color-primary);
 }
 
-/* 이전 / 다음 날짜 이동 버튼 */
 .btn-date-nav {
   background: none;
   border: 2px solid var(--color-border);
@@ -118,6 +117,7 @@ body {
   justify-content: center;
   transition: border-color 0.2s, color 0.2s, transform 0.1s;
   padding: 0;
+  flex-shrink: 0;
 }
 
 .btn-date-nav:hover {
@@ -129,7 +129,6 @@ body {
   transform: scale(0.93);
 }
 
-/* 오늘로 이동 버튼 */
 .btn-today {
   background: none;
   border: 1.5px solid var(--color-border);
@@ -180,7 +179,6 @@ body {
   color: var(--color-text);
 }
 
-/* 달력 내 월 이동 버튼 */
 .btn-cal-nav {
   background: none;
   border: none;
@@ -198,7 +196,6 @@ body {
   background-color: var(--color-primary-light);
 }
 
-/* 요일 헤더 */
 .calendar-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -209,14 +206,12 @@ body {
   margin-bottom: 6px;
 }
 
-/* 날짜 그리드 */
 .calendar-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 3px;
 }
 
-/* 개별 날짜 셀 */
 .cal-day {
   aspect-ratio: 1;
   display: flex;
@@ -236,14 +231,12 @@ body {
   color: var(--color-primary);
 }
 
-/* 오늘 날짜 */
 .cal-day.is-today {
   background-color: var(--color-primary);
   color: #fff;
   font-weight: 700;
 }
 
-/* 현재 선택된 날짜 (오늘이 아닐 때) */
 .cal-day.is-selected:not(.is-today) {
   border: 2px solid var(--color-primary);
   color: var(--color-primary);
@@ -252,6 +245,93 @@ body {
 
 .cal-day.empty {
   cursor: default;
+}
+
+/* ===== 주간 뷰 ===== */
+.week-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 16px;
+}
+
+/* 7열 균등 그리드 */
+.week-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+/* 개별 날짜 셀 */
+.week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 2px;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.week-day:hover {
+  background-color: var(--color-primary-light);
+}
+
+/* 요일 레이블 (월 화 수 ...) */
+.week-day-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+/* 날짜 숫자 원 */
+.week-day-num {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+  transition: background-color 0.15s, color 0.15s, border 0.15s;
+}
+
+/* Todo 개수 뱃지 - min-height로 0일 때도 레이아웃 유지 */
+.week-day-count {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  min-height: 12px;
+  line-height: 1;
+}
+
+/* 현재 선택된 날짜: 채워진 초록 원 */
+.week-day.is-selected .week-day-num {
+  background-color: var(--color-primary);
+  color: #fff;
+}
+
+.week-day.is-selected .week-day-label {
+  color: var(--color-primary);
+}
+
+/* 오늘이지만 선택되지 않은 날짜: 초록 테두리 원 */
+.week-day.is-today:not(.is-selected) .week-day-num {
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary);
+}
+
+.week-day.is-today:not(.is-selected) .week-day-label {
+  color: var(--color-primary);
 }
 
 /* ===== 입력 영역 ===== */
@@ -286,7 +366,6 @@ body {
   border-color: var(--color-danger);
 }
 
-/* 마감 시간 입력 행 */
 .due-wrapper {
   display: flex;
   align-items: center;
@@ -441,7 +520,6 @@ body {
   background-color: #fafafa;
 }
 
-/* 텍스트와 마감 시간을 묶는 컨텐츠 영역 */
 .todo-content {
   flex: 1;
   display: flex;
@@ -461,19 +539,16 @@ body {
   color: var(--color-text-muted);
 }
 
-/* 마감 시간 배지 */
 .todo-due {
   font-size: 0.78rem;
   color: var(--color-text-muted);
 }
 
-/* 기한이 지난 경우 빨간색 강조 */
 .todo-due.is-overdue {
   color: var(--color-danger);
   font-weight: 600;
 }
 
-/* 수정 모드 인풋 */
 .edit-input {
   padding: 6px 10px;
   border: 2px solid var(--color-primary);
@@ -484,7 +559,6 @@ body {
   width: 100%;
 }
 
-/* 수정 모드 마감 시간 입력 행 */
 .edit-due-wrapper {
   display: flex;
   align-items: center;
